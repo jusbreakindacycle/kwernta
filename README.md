@@ -2,39 +2,95 @@
 
 **Run the business. Know what's next.**
 
-Kwernta is a mobile-only SaaS business management platform for Philippine micro and small businesses. It connects everyday operations with business readiness so owners can record what is happening, understand the condition of the business, control what staff can do, and know what legitimate action should happen next.
+Kwernta is a **mobile-only business operations and readiness app for Philippine micro and small businesses**.
 
-## Product direction
+Staff use Kwernta to record the day-to-day business. Owners use the same records to understand what happened, control what staff can do, identify problems, and know what needs attention next — from sales, stock, cash, and corrections to business requirements and tax-record readiness.
 
-Kwernta has two equally important product engines:
+## The product loop
 
-- **Daily Business Operations** — sales, inventory, receiving, expenses, payments, cash control, customers, suppliers, staff workflows, corrections, audit history, and owner visibility.
-- **Business Readiness** — business classification and location, registration and local requirements, BMBE readiness, tax readiness, evidence status, reminders, and evidence-backed next actions.
+Kwernta is organized around one loop:
 
-Operational records and readiness are intentionally connected. The same records used to run the business should improve the quality of financial, compliance, and tax-readiness information.
+**Record → Understand → Act**
+
+### Record
+Capture what actually happened:
+- sales and payments;
+- expenses;
+- stock receiving and stock movements;
+- cash sessions and variances;
+- staff actions;
+- business facts and evidence.
+
+### Understand
+Turn those records into trustworthy business state:
+- what sold;
+- what was spent;
+- what stock changed;
+- what cash should be on hand;
+- what records are incomplete;
+- what business requirements apply;
+- how ready the records are for tax preparation/review.
+
+### Act
+Show the right next action to the right person:
+- staff receives stock;
+- owner reviews a cash variance;
+- owner approves a correction;
+- owner completes a missing registration fact;
+- owner reviews a verified business requirement;
+- owner/accountant prepares records for a tax period.
+
+## Owner and Staff
+
+Kwernta is one mobile app with different responsibilities.
+
+**Staff** should be able to operate quickly without automatically seeing owner-only information.
+
+**Owners** should be able to see what happened, what changed, what is wrong, what requires approval, and what should happen next.
+
+## What Kwernta is not
+
+Kwernta is not initially:
+- a full ERP;
+- a full accounting replacement;
+- an autonomous tax engine;
+- a BIR filing system;
+- a government portal;
+- a payroll/HR suite;
+- a CRM suite;
+- an e-commerce marketplace;
+- a separate app for every business type.
+
+Business-specific behavior is added through capabilities/business packs while the core remains shared.
 
 ## Canonical specification
 
 The authoritative product and implementation specification is:
 
-`/PRODUCT_BUILD_SPEC.md`
+**[`PRODUCT_BUILD_SPEC.md`](./PRODUCT_BUILD_SPEC.md)**
 
-When implementation decisions, prompts, older documents, or reference repositories conflict with that specification, `PRODUCT_BUILD_SPEC.md` wins unless an explicit later product decision updates it.
+Coding agents must also follow:
 
-## Repository status
+**[`AGENTS.md`](./AGENTS.md)**
 
-This repository is the **new canonical Kwernta implementation**.
+If implementation assumptions or legacy material conflict with `PRODUCT_BUILD_SPEC.md`, the product specification wins.
 
-It starts clean. Do not bulk-copy the old e-NegosyoPH codebase into this repository.
+## Legacy repository
 
-The previous repository remains reference material:
+The previous project remains reference material only:
 
-`https://github.com/jusbreakindacycle/e-negosyoph`
+https://github.com/jusbreakindacycle/e-negosyoph
 
-Useful legacy evidence may include PSIC and PSGC work, business-tenancy ideas, RLS patterns, requirement-graph concepts, BMBE logic, audit/idempotency patterns, tests, and researched rule evidence. Any legacy material must be inspected, re-verified where necessary, and selectively ported into Kwernta's architecture rather than treated as authoritative.
+Useful legacy work may include PSIC/PSGC research, RLS/tenancy patterns, requirement-graph ideas, BMBE logic, audit/idempotency patterns, tests, and source evidence.
 
-## Implementation principle
+Do not bulk-copy it. Inspect, verify, and selectively port only when a current Kwernta milestone needs it.
 
-Build milestone by milestone. Preserve simplicity until evidence justifies complexity.
+## Current build stage
 
-The first implementation task is **Milestone 0 — Product Foundation**, as defined in `PRODUCT_BUILD_SPEC.md`.
+The repository is intentionally documentation-first before implementation.
+
+The first implementation milestone is:
+
+**Milestone 0 — Product Foundation**
+
+M0 establishes the mobile, tenancy, security, local database, outbox, sync, idempotency, audit, and capability foundations. It must not expand into sales, inventory, compliance, or tax features prematurely.
