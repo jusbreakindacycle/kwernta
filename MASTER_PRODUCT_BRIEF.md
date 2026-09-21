@@ -14,33 +14,34 @@
 This is the single canonical product + architecture document for Kwernta.
 
 It defines:
-- what Kwernta is;
-- who it serves;
-- the MVP;
-- the domain model;
+- product identity and boundaries;
+- target users;
+- MVP behavior;
 - system architecture;
-- data/entity boundaries;
+- domain model and invariants;
+- conceptual data entities;
 - command/API contracts;
-- roles/permissions;
+- roles and permissions;
 - attention/readiness rules;
-- evidence model;
-- data-retention model;
-- UI screen inventory;
-- threat model;
+- evidence and retention models;
+- UI information architecture;
+- offline/sync behavior;
+- security/threat model;
+- freemium/commercial architecture;
 - MVP backlog;
 - milestone-by-milestone build plan;
-- definition of done.
+- testing and definition of done.
 
 If this document conflicts with:
-- legacy e-NegosyoPH material;
 - generic POS/SaaS assumptions;
 - competitor behavior;
 - screenshots/prototypes;
 - coding-agent assumptions;
 - reusable skills;
-- boilerplates/templates;
+- templates/boilerplates;
+- framework defaults;
 
-**this document wins**, unless an explicit later product decision changes it.
+**this document wins** unless an explicit later product decision changes it.
 
 `AGENTS.md` defines how coding agents should execute this document.
 
@@ -52,7 +53,7 @@ Skills are execution aids. They never redefine the product.
 
 ## 1.1 Kwernta in one sentence
 
-**Kwernta is a mobile-only business operations and readiness app for Philippine small businesses where staff record the day-to-day business and owners use the same records to understand what happened, what needs attention, and what they need to do next — including business and tax readiness.**
+**Kwernta is a mobile-only business operations and readiness app for Philippine small businesses where staff record day-to-day business activity and owners use the same records to understand what happened, what needs attention, and what they need to do next — including business and tax readiness.**
 
 ## 1.2 Core loop
 
@@ -72,7 +73,7 @@ Capture what actually happened:
 - tax-readiness inputs.
 
 ### Understand
-Turn records into explainable business state:
+Turn those records into explainable business state:
 - what sold;
 - what was spent;
 - where money moved;
@@ -87,13 +88,13 @@ Turn records into explainable business state:
 Show the right next action to the right role:
 - staff receives stock;
 - staff resolves an unsynced item;
-- owner reviews cash variance;
+- owner reviews a cash variance;
 - owner approves a correction;
 - owner completes a missing business fact;
 - owner reviews a verified requirement;
 - owner/accountant prepares incomplete records.
 
-Kwernta's home/dashboard is therefore primarily an **attention system**, not a decorative analytics screen.
+Kwernta's home/dashboard is primarily an **attention system**, not only an analytics screen.
 
 ---
 
@@ -103,16 +104,16 @@ Kwernta is not initially:
 - a full ERP;
 - a full accounting replacement;
 - a universal tax engine;
-- a BIR filing system;
+- an autonomous filing system;
 - a government portal;
 - payroll/HR;
 - a full CRM;
-- e-commerce marketplace;
-- logistics optimizer;
+- an e-commerce marketplace;
+- a logistics optimizer;
 - a separate app for each business type;
-- an AI business adviser that invents conclusions.
+- an AI adviser that invents regulatory or financial conclusions.
 
-Business-specific behavior is delivered through capabilities/business packs over one shared core.
+Business-specific behavior is delivered through capabilities and business packs over one shared core.
 
 ---
 
@@ -129,8 +130,8 @@ At MVP depth:
 - inventory movement;
 - receiving;
 - expenses;
-- customers;
-- suppliers;
+- basic customers;
+- basic suppliers;
 - cash sessions/reconciliation;
 - corrections/reversals;
 - staff activity;
@@ -143,17 +144,17 @@ At MVP depth:
 
 At MVP depth:
 - business activity/profile;
-- PSIC suggestion + owner confirmation;
-- location/PSGC confirmation;
+- business classification;
+- business location;
 - lifecycle/state;
 - verified requirement discovery where coverage exists;
 - requirement/evidence status;
-- BMBE readiness where current verified rules support it;
+- supported readiness workflows;
 - tax profile;
 - tax-record readiness;
 - source-backed reminders/next actions.
 
-These are not separate mini-products. Operational facts may feed readiness when appropriate.
+The two pillars share trusted business facts. They must not become disconnected mini-products.
 
 ---
 
@@ -170,7 +171,8 @@ Owner jobs:
 - review audit history;
 - manage readiness/tax facts;
 - act on owner-only attention;
-- export records.
+- export records;
+- manage subscription/commercial settings later.
 
 ## Staff
 
@@ -183,17 +185,18 @@ Staff jobs are fast, operational, and permission-based:
 - view limited customer/supplier information;
 - request corrections.
 
-Staff must not automatically see:
-- owner profit/cost summaries;
+Staff must not automatically receive:
+- owner-level sensitive financial summaries;
 - tax profile;
 - compliance configuration;
 - staff administration;
-- business deletion controls;
+- billing/subscription administration;
+- business deletion/closure controls;
 - unrestricted audit history;
 - sensitive evidence;
 - arbitrary editing/deletion of finalized transactions.
 
-MVP roles:
+MVP role families:
 - OWNER
 - STAFF
 
@@ -238,7 +241,7 @@ Owner / Staff
 Kwernta Mobile App
 Expo + React Native + TypeScript
      │
-     ├── Local transactional DB (SQLite or justified equivalent)
+     ├── Local transactional DB
      ├── Local projections/cache
      └── Durable outbox
               │
@@ -249,16 +252,13 @@ Supabase Platform
      ├── PostgreSQL
      ├── RLS
      ├── RPC / Edge Functions where justified
-     ├── Storage later
-     └── Server-side audit / command receipts
+     ├── Storage when needed
+     └── Audit / command receipts
               │
-              ▼
-Versioned reference/rule sources
-     ├── PSA / PSIC
-     ├── PSA / PSGC
-     ├── DTI / BMBE
-     ├── BIR
-     └── LGU / other official sources where verified
+              ├───────────────┐
+              ▼               ▼
+   Versioned rules        Commercial state later
+   / reference data       subscriptions/entitlements
 ```
 
 ## 6.2 Architectural principles
@@ -267,14 +267,15 @@ Versioned reference/rule sources
 - local-first for supported operational writes;
 - cloud synchronization for SaaS/multi-device state;
 - server/database authorization;
-- Postgres RLS for tenant isolation;
-- immutable/append-only financial and stock history in spirit;
+- PostgreSQL RLS for tenant isolation;
+- finalized financial/stock history corrected rather than silently rewritten;
 - capability-driven product surface;
 - business packs extend rather than fork;
-- readiness/tax logic is deterministic + source-backed;
+- readiness/tax logic deterministic + source-backed;
 - AI explains, not authorizes;
-- use mature commodity SaaS infrastructure when later needed;
-- do not adopt generic web SaaS boilerplates as the application foundation.
+- business type, entitlement, permission, subscription, and billing remain separate;
+- use mature commodity infrastructure where appropriate;
+- avoid generic web-first architecture that conflicts with mobile/offline requirements.
 
 ---
 
@@ -287,8 +288,11 @@ User
  └─ Membership ───────────── Business
                               │
                               ├─ Location
+                              ├─ BusinessProfile
                               ├─ Capability
-                              ├─ Staff memberships
+                              ├─ Entitlement (later)
+                              ├─ Subscription (later)
+                              │
                               ├─ CatalogItem
                               ├─ PaymentAccount
                               │
@@ -312,18 +316,10 @@ User
                               └─ ActionCandidate
 ```
 
-## 7.2 Domain responsibilities
+## 7.2 Core responsibilities
 
 ### Business
 Tenant/business identity and business-scoped configuration.
-
-Owns or scopes:
-- locations;
-- memberships;
-- capabilities;
-- operational records;
-- readiness state;
-- tax-readiness context.
 
 ### Membership
 Defines a user's relationship to a business.
@@ -335,52 +331,65 @@ Must carry:
 - state;
 - permission context later.
 
+### BusinessProfile / Type
+Describes what kind of business is being operated and what capabilities may be relevant.
+
+It is **not** a subscription plan.
+
+### Capability
+Describes whether a feature/workflow is relevant/applicable to the business.
+
+Examples:
+- sales;
+- inventory;
+- cash sessions;
+- service jobs;
+- recipes;
+- water-container workflows;
+- rice-repacking workflows.
+
+Capability does not mean the feature is commercially unlocked.
+
+### Entitlement
+Later commercial concept indicating whether the business currently has access to a feature.
+
+### Permission
+Member-specific authorization for an action.
+
+Permission does not equal entitlement.
+
 ### Sale
-Commercial transaction aggregate.
-
-Owns:
-- sale identity;
-- line items;
-- price snapshots;
-- totals;
-- lifecycle/finalization.
-
-Does not own:
-- current stock balance;
-- business tax classification;
-- cash-session authority.
+Commercial transaction aggregate. Owns identity, line snapshots, totals, lifecycle/finalization.
 
 ### Payment
-Records value received against a sale/transaction context and payment account.
+Value received through a payment account.
 
 ### StockMovement
-Append-oriented inventory ledger entry.
-
-Stock balance is derived from movements or a safely maintained projection.
+Append-oriented inventory ledger entry. Stock balance is derived/projection-backed.
 
 ### Expense
 Operational spending record with payment-account linkage and optional evidence.
 
 ### CashSession
-Controls physical cash session/open-close reconciliation.
+Physical cash open/close and reconciliation.
 
 ### CorrectionRequest / Approval
-Preserves history while allowing authorized fixes.
+Authorized correction workflow preserving history.
 
 ### AuditEvent
-Immutable-ish provenance of security/financial mutations.
+Provenance of important financial/security mutations.
 
 ### BusinessFact
 Owner/system-known facts used by readiness rules.
 
 ### RequirementRule / RequirementStatus
-Versioned requirement definition + business-specific progress/state.
+Versioned rule definition + business-specific status.
 
 ### Evidence
-Proof/reference metadata attached to a business fact, transaction, requirement, or readiness result.
+Proof/reference metadata attached to facts, records, requirements, or readiness results.
 
 ### TaxProfile
-Owner-confirmed tax/registration facts. Must not silently infer legal status from operational totals.
+Owner-confirmed tax/registration facts. Legal classification must not be silently inferred from sales totals.
 
 ### ActionCandidate
 Structured attention/next-action output generated by domain/rule logic.
@@ -389,65 +398,75 @@ Structured attention/next-action output generated by domain/rule logic.
 
 # 8. Domain invariants
 
-These must become tests.
+These must become tests as relevant milestones arrive.
 
 1. Finalized financial/stock records are not silently rewritten.
 2. Corrections use compensating/reversal records or explicit correction workflows.
-3. Sale lines retain price snapshots used at transaction time.
-4. Inventory balance is derived from movement history/projections, not an untracked mutable stock field.
-5. Money uses integer minor units or exact decimal representation.
-6. The server never authorizes access solely from client-supplied `business_id`.
-7. Every business-owned cloud record is protected by membership/authorization rules.
-8. OWNER-only commands require OWNER authority server-side.
-9. STAFF permissions are enforced server-side, not only through UI.
+3. Sale lines preserve transaction-time price snapshots.
+4. Inventory is movement-ledger based.
+5. Money uses integer minor units or exact-decimal strategy.
+6. Server authorization never trusts client-supplied `business_id` alone.
+7. Every business-owned cloud record is protected by membership/authorization.
+8. OWNER-only actions require OWNER authority server-side.
+9. STAFF permissions are enforced server-side.
 10. Sync commands are idempotent.
-11. Duplicate retries cannot create duplicate logical mutations.
-12. Unsynced local commands persist across app restart.
-13. Outbox failure cannot silently discard business records.
+11. Duplicate retries cannot duplicate logical mutations.
+12. Unsynced local commands persist across restart.
+13. Failed outbox items never silently disappear.
 14. Reference/rule datasets are versioned.
-15. Readiness conclusions expose inputs/source/version.
+15. Readiness conclusions expose their inputs/source/version.
 16. Tax readiness is not autonomous tax filing.
-17. AI cannot invent or authorize government/tax conclusions.
-18. Legal/deadline logic must use trustworthy time where relevant.
-19. Capability applicability and commercial entitlement are separate.
-20. Business-pack code cannot bypass core authorization/audit/sync invariants.
+17. AI cannot invent or authorize regulatory/tax conclusions.
+18. Legal/deadline logic uses trustworthy time where relevant.
+19. Capability applicability is separate from commercial entitlement.
+20. Entitlement is separate from member permission.
+21. Subscription is primarily business-scoped, not staff-user-scoped.
+22. Billing confirmation must come from a trusted server-side/provider-verifiable source.
+23. Basic security, tenant isolation, data integrity, safe sync, and idempotency are never paywalled.
+24. Downgrade/expiration must not silently delete business records.
+25. Business-pack code cannot bypass core security/audit/sync/money/inventory invariants.
 
 ---
 
-# 9. Conceptual database entity model
+# 9. Conceptual entity model
 
-This is a domain map, not an instruction to create every table in M0.
+This is a domain map, not an instruction to create every entity now.
 
-| Entity | Purpose | Ownership / security | Key invariant |
+| Entity | Purpose | Security/ownership | Key invariant |
 |---|---|---|---|
-| profiles | app user profile | user-scoped | no authz decisions from editable metadata |
+| profiles | app user profile | user-scoped | editable metadata is not authorization |
 | businesses | tenant identity | membership-scoped | creator becomes OWNER atomically |
-| business_memberships | role/authority | business-scoped | membership required for tenant access |
-| business_locations | operating location | business-scoped | explicit confirmation for regulated geography |
-| business_capabilities | applicable feature set | business-scoped | not equal to subscription entitlement |
-| devices | sync/device identity | user/business-scoped | revocable/traceable |
-| catalog_items | product/service definition | business-scoped | price changes do not rewrite history |
-| payment_accounts | cash/e-wallet/bank/custom | business-scoped | payment references account |
-| sales | commercial transaction | business-scoped | finalized state immutable in spirit |
+| business_memberships | role/authority | business-scoped | membership required |
+| business_locations | operating location | business-scoped | explicit location state |
+| business_profiles | type/activity configuration | business-scoped | type != plan |
+| business_capabilities | relevant/applicable features | business-scoped | capability != entitlement |
+| devices | device/sync identity | user/business-scoped | traceable/revocable |
+| catalog_items | product/service definition | business-scoped | price updates don't rewrite history |
+| payment_accounts | cash/e-wallet/bank/custom | business-scoped | payments reference account |
+| sales | commercial transaction | business-scoped | finalized state corrected, not overwritten |
 | sale_lines | transaction detail | sale-scoped | price snapshot preserved |
 | payments | value received | business/sale-scoped | precision-safe money |
-| stock_movements | inventory ledger | business/location-scoped | append/correct, do not overwrite |
-| stock_receipts | receiving context | business/location-scoped | creates stock movement |
-| expenses | spending record | business-scoped | payment account + actor provenance |
-| cash_sessions | physical cash control | business/location-scoped | explicit open/close state |
-| correction_requests | correction intent | business-scoped | preserves original record |
-| approvals | owner/control decision | business-scoped | authority checked server-side |
+| stock_movements | inventory ledger | business/location-scoped | append/correct |
+| stock_receipts | receiving context | business/location-scoped | creates movement |
+| expenses | spending record | business-scoped | actor + account provenance |
+| cash_sessions | physical cash control | business/location-scoped | explicit open/close |
+| correction_requests | correction intent | business-scoped | original preserved |
+| approvals | owner/control decision | business-scoped | server authority |
 | audit_events | mutation provenance | business-scoped/private | append/restricted |
-| business_facts | readiness inputs | business-scoped | source + confidence/state |
-| business_classifications | PSIC/business classification | business-scoped | suggestion ≠ confirmation |
-| requirement_rules | versioned rule library | platform/reference | source/effective date required |
-| requirement_status | business progress | business-scoped | user-recorded ≠ externally verified |
-| evidence | proof/reference metadata | business-scoped/private | explicit verification state |
-| tax_profiles | confirmed tax facts | business/taxpayer context | not silently inferred |
-| action_candidates | attention/next action | business-scoped | traceable to reason/rule |
-| command_receipts | idempotency | server-controlled | unique command identity |
-| sync checkpoints | sync state where needed | device/business | never imply data loss |
-| local outbox | durable offline commands | device-local | survives restart |
+| business_facts | readiness inputs | business-scoped | source/state |
+| business_classifications | formal classification | business-scoped | suggestion != confirmation |
+| requirement_rules | versioned rule library | platform/reference | source/effective metadata |
+| requirement_status | business progress | business-scoped | user-recorded != external verification |
+| evidence | proof/reference metadata | business-scoped/private | verification state |
+| tax_profiles | confirmed tax facts | business-scoped | not silently inferred |
+| action_candidates | next actions | business-scoped | traceable reason/rule |
+| command_receipts | server idempotency | server-controlled | unique command identity |
+| sync checkpoints | sync state | device/business | no silent data loss |
+| local outbox | durable local commands | device-local | survives restart |
+| plans | commercial plan catalog later | platform | packaging, not domain relevance |
+| subscriptions | business commercial agreement later | business-scoped | business is subscriber context |
+| entitlements | effective commercial access later | business-scoped | computed/verified centrally |
+| billing_events | provider events later | server-controlled | trusted and idempotent |
 
 ---
 
@@ -460,12 +479,10 @@ This is a domain map, not an instruction to create every table in M0.
 - business/trade/legal names kept distinct where needed;
 - business activity;
 - business type/profile;
-- primary operating location;
-- business memberships;
+- primary location;
+- memberships;
 - active-business selection;
 - capability profile.
-
-Data model supports multiple businesses per user, even if UX initially emphasizes one active business.
 
 ## Catalog
 - product/service;
@@ -527,26 +544,25 @@ Date, category, amount, payment account, description, optional supplier/evidence
 Basic identity/contact/notes/transaction linkage.
 
 ## Cash sessions
-Open, opening amount, operator, expected closing, counted closing, variance, note, close, attention.
+Open, opening amount, operator, expected closing, counted closing, variance, note, close, owner attention.
 
 ## Corrections
 Finalized record → correction request/command → authorization → compensating/corrective records → audit.
 
 ---
 
-# 11. Application command/API contracts
+# 11. Command/API contracts
 
-Kwernta does not invent “inter-agency APIs.” External government sources are reference/integration contracts unless an actual supported API exists.
+Kwernta does not assume an external API exists unless verified.
 
 Each state-changing command must define:
 - command name;
 - actor;
 - required authority;
 - business context;
-- input schema;
-- validation;
+- input validation;
 - offline allowance;
-- idempotency key;
+- idempotency;
 - transaction boundary;
 - result;
 - error classes;
@@ -555,38 +571,27 @@ Each state-changing command must define:
 ## 11.1 M0 commands
 
 ### CreateBusinessCommand
-
 **Actor:** authenticated user  
-**Authority:** authenticated user may create own business  
 **Offline:** no  
-**Input:** business name + minimal required profile  
-**Transaction:** business + OWNER membership + base records atomically  
-**Idempotency:** required for retry-safe submission  
-**Audit:** business created / owner membership established  
-**Failure rule:** no partial business without membership
+**Transaction:** business + OWNER membership + minimal foundation records atomically  
+**Idempotency:** required  
+**Failure:** no partial tenant state
 
 ### SetActiveBusinessLocalCommand
-
 **Actor:** authenticated local user  
-**Authority:** local selection only; server access still checks membership  
 **Offline:** yes  
-**Effect:** persist selected business ID locally  
+**Effect:** persist local active-business selection  
 **Security:** stale selection never grants server access
 
 ### M0SyncProofCommand
+A harmless business-scoped command used solely to prove local → outbox → server → ack.
 
-A harmless business-scoped command used only to prove local → outbox → server → ack.
-
-**Actor:** authenticated member  
 **Offline:** yes  
-**Idempotency:** mandatory  
-**Server checks:** authentication + membership + payload validation  
-**Effect:** minimal safe server mutation/receipt + audit where applicable  
-**Ack:** marks matching outbox entry acknowledged  
-**Duplicate:** returns prior result / no duplicate mutation
+**Server:** authentication + membership + payload validation + idempotency  
+**Duplicate:** no duplicate mutation  
+**Ack:** local outbox becomes acknowledged
 
-## 11.2 Later command examples
-
+## 11.2 Later examples
 - FinalizeSaleCommand
 - RecordExpenseCommand
 - ReceiveStockCommand
@@ -596,46 +601,33 @@ A harmless business-scoped command used only to prove local → outbox → serve
 - ApproveCorrectionCommand
 - UpdateBusinessFactCommand
 
-These are not M0 implementation requirements unless explicitly requested.
+These are not M0 requirements.
 
 ---
 
 # 12. External/reference integration contracts
 
-No external agency capability may be assumed.
-
-For each external source, store/define:
-- provider/agency;
-- official source;
+For every external authoritative source/integration, define:
+- provider/authority;
+- source URL/endpoint;
 - access method;
 - data format;
 - jurisdiction;
 - effective/version date;
-- update cadence;
+- update/review cadence;
 - verification state;
-- fallback if unavailable;
-- terms/licensing constraints if relevant.
+- fallback when unavailable;
+- licensing/terms where relevant.
 
-Candidate future sources:
-- PSA PSIC;
-- PSA PSGC;
-- DTI/BMBE;
-- BIR;
-- LGU official sources;
-- other agencies only when required by supported workflows.
-
-If no stable API exists, treat it as a versioned reference-data ingestion/research process, not an API integration.
+If no stable API exists, use a versioned reference-data/research ingestion process rather than pretending an API integration exists.
 
 ---
 
 # 13. Attention & Readiness Engine
 
-This replaces the idea of a generic “risk engine.”
+Rules are deterministic and testable. UI must not independently invent actions.
 
-Rules are deterministic and testable. UI does not invent actions.
-
-## 13.1 Action structure
-
+## Action structure
 Conceptual fields:
 - id;
 - business_id;
@@ -649,128 +641,68 @@ Conceptual fields:
 - evidence_state;
 - due_at;
 - authorized_roles;
-- requires_owner_approval;
+- owner_approval_required;
 - destination;
 - state;
 - rule_version.
 
-## 13.2 Operational rules
+## Operational rules
 
 ### LOW_STOCK
-IF:
-- stock tracking is enabled;
-- current quantity <= configured low-stock threshold;
-
-THEN:
-- emit LOW_STOCK action;
-- audience includes authorized stock role/OWNER;
-- clear when quantity rises above threshold.
+IF stock tracking enabled AND current quantity <= low-stock threshold  
+THEN emit LOW_STOCK.
 
 ### CASH_VARIANCE
-IF:
-- cash session is closed;
-- counted closing cash != expected closing cash;
-
-THEN:
-- emit CASH_VARIANCE;
-- OWNER visibility required;
-- preserve difference and closing context.
+IF cash session closed AND counted cash != expected cash  
+THEN emit owner-visible CASH_VARIANCE.
 
 ### CORRECTION_PENDING
-IF:
-- correction request state = PENDING_OWNER_APPROVAL;
-
-THEN:
-- emit owner-only correction attention.
+IF correction request = PENDING_OWNER_APPROVAL  
+THEN emit owner-only correction attention.
 
 ### SYNC_STUCK
-IF:
-- outbox item is not acknowledged;
-- retry attempts exceed configured operational threshold or a non-retryable failure exists;
+IF outbox item remains unacknowledged beyond retry/error policy  
+THEN emit sync attention and preserve the command.
 
-THEN:
-- emit sync attention;
-- preserve command locally;
-- never auto-delete merely due to retry count.
-
-## 13.3 Readiness rules
+## Readiness rules
 
 ### BUSINESS_FACT_MISSING
-IF:
-- an active supported requirement/rule needs a fact;
-- fact is missing/unknown;
-
-THEN:
-- emit NEEDS_INFORMATION action;
-- do not infer the fact.
+IF a supported rule requires a missing fact  
+THEN NEEDS_INFORMATION; do not infer the fact.
 
 ### REQUIREMENT_NEEDS_ATTENTION
-IF:
-- a verified applicable requirement is incomplete/expired/nearing verified deadline;
-
-THEN:
-- emit source-backed action;
-- include rule/source/version.
+IF a verified applicable requirement is incomplete/expired/nearing a verified deadline  
+THEN emit source-backed action.
 
 ### COVERAGE_UNKNOWN
-IF:
-- Kwernta lacks verified rule coverage for the jurisdiction/business context;
+IF verified coverage is unavailable  
+THEN show UNKNOWN / COVERAGE_NOT_VERIFIED rather than fabricate.
 
-THEN:
-- show COVERAGE_NOT_VERIFIED / UNKNOWN;
-- do not fabricate requirement list.
-
-## 13.4 Tax-readiness rules
+## Tax-readiness rules
 
 ### TAX_PROFILE_INCOMPLETE
-IF:
-- supported tax-readiness evaluation requires owner-confirmed facts;
-- one or more are missing;
-
-THEN:
-- readiness = NEEDS_INFORMATION.
+Missing required confirmed facts → NEEDS_INFORMATION.
 
 ### RECORDS_INCOMPLETE
-IF:
-- required profile facts are present;
-- operational records/evidence are incomplete for the period;
-
-THEN:
-- readiness = RECORDS_INCOMPLETE.
+Profile sufficient but period records/evidence incomplete → RECORDS_INCOMPLETE.
 
 ### READY_TO_PREPARE
-IF:
-- supported required profile facts are present;
-- required record completeness conditions are satisfied;
-- no blocking unsupported/unknown condition remains;
-
-THEN:
-- readiness = READY_TO_PREPARE.
+Supported facts and completeness conditions satisfied with no blocking unknown → READY_TO_PREPARE.
 
 ### READY_FOR_PROFESSIONAL_REVIEW
-IF:
-- deterministic readiness prerequisites are met;
-- the workflow requires/encourages accountant/professional confirmation;
+Deterministic prerequisites satisfied and human/professional review remains appropriate → READY_FOR_PROFESSIONAL_REVIEW.
 
-THEN:
-- readiness = READY_FOR_PROFESSIONAL_REVIEW.
-
-Kwernta must not convert these states into a claim that filing, payment, or government acceptance occurred.
+No readiness state implies filing, payment, or government acceptance.
 
 ---
 
 # 14. Roles and permissions
 
-MVP role families:
-- OWNER
-- STAFF
-
-| Capability / action | OWNER | STAFF |
+| Capability/action | OWNER | STAFF |
 |---|---:|---:|
 | Create business | Yes | N/A |
 | View active business | Yes | Yes if member |
 | Record sale | Yes | Permission |
-| View limited sales history | Yes | Permission |
 | Receive stock | Yes | Permission |
 | View stock | Yes | Permission |
 | Adjust stock | Yes | Permission |
@@ -783,35 +715,33 @@ MVP role families:
 | View sensitive financial summary | Yes | No by default |
 | Manage staff | Yes | No |
 | Manage permissions | Yes | No |
-| Manage tax profile | Yes | No |
-| Manage readiness/compliance profile | Yes | No |
+| Manage readiness/tax profile | Yes | No |
 | Export business data | Yes | No by default |
-| Delete/close business | Yes | No |
+| Manage subscription/billing later | Yes | No |
 
-Authorization must be enforced at the server/database layer.
+Authorization must be enforced server/database-side.
 
 ---
 
 # 15. Evidence model
 
-Evidence is not merely a file upload. It is proof/reference metadata with provenance.
+Evidence is proof/reference metadata, not merely file upload.
 
 Conceptual fields:
 - evidence_id;
 - business_id;
 - evidence_type;
-- related_entity_type;
-- related_entity_id;
+- related_entity_type/id;
 - source_kind;
 - source_reference;
-- storage_reference if a file exists;
+- storage_reference;
 - captured_at;
 - document_date;
-- issuer optional;
-- expiry_date optional;
+- issuer;
+- expiry_date;
 - verification_state;
-- verified_by/source optional;
-- rule_version optional;
+- verified_by/source;
+- rule_version;
 - retention_class;
 - sensitivity_class.
 
@@ -823,20 +753,17 @@ Verification states:
 - NEEDS_REVIEW
 - UNKNOWN
 
-Important distinction:
+**User-recorded complete != independently verified complete.**
 
-**“User says complete” != “Kwernta independently verified complete.”**
-
-Files/evidence are private by default.
+Evidence/files are private by default.
 
 ---
 
-# 16. Data retention matrix
+# 16. Data retention
 
-Exact legal retention periods must be researched/verified before implementation. Do not invent them.
+Exact legal retention periods must be verified before activation.
 
 Retention classes:
-
 - EPHEMERAL
 - ACCOUNT_LIFECYCLE
 - BUSINESS_RECORD
@@ -845,62 +772,54 @@ Retention classes:
 - OWNER_CONFIGURABLE
 - UNTIL_ACKNOWLEDGED_OR_RESOLVED
 
-| Data | Default product retention principle | Deletion behavior |
+| Data | Product retention principle | Deletion behavior |
 |---|---|---|
 | auth session/token | security lifecycle | expire/revoke |
-| profile | account lifecycle | controlled account deletion |
+| profile | account lifecycle | controlled deletion |
 | business | business lifecycle | controlled close/delete |
-| membership | business/security history | retain necessary history |
-| finalized sale/payment | business record | no casual destructive deletion |
-| stock movement | business record | corrective entry rather than deletion |
-| expense | business record | correction/controlled deletion policy |
-| cash close/reconciliation | business record | preserve finalized history |
-| correction/approval | business/audit | preserve provenance |
-| audit event | security audit | restricted, long-lived |
+| membership | security/business history | preserve necessary history |
+| finalized financial records | business record | no casual destructive deletion |
+| stock movement | business record | correction rather than deletion |
+| correction/approval | audit/business | preserve provenance |
+| audit event | security audit | restricted/long-lived |
 | unsynced outbox item | until ack/resolved | never silently purge |
-| command receipt | idempotency/security | retain long enough to prevent duplicate replay per policy |
-| evidence metadata/file | product/legal class | controlled deletion according to class |
-| readiness snapshot | where relied upon | preserve source/version context |
-| tax-readiness result | business/regulatory class | preserve provenance; period/rule version |
+| command receipt | idempotency/security | policy-driven retention |
+| evidence | product/legal class | controlled by retention class |
+| readiness/tax result | where relied upon | preserve source/version context |
+| billing event later | commercial/audit | preserve provider reconciliation history |
 
-Future retention changes must define:
-- legal basis;
-- product need;
-- user expectation;
-- delete/export behavior;
-- backups;
-- offline copies;
-- audit implications.
+Downgrade or subscription expiration must not delete historical business data.
 
 ---
 
-# 17. UI screen inventory
+# 17. UI information architecture
 
-This is information architecture, not pixel design.
+This is screen/flow planning, not pixel design.
 
 ## Authentication
 - Sign In
-- Session Restore / Loading
+- Session Restore
 - Sign Out
-- Auth Error/Recovery
+- Recovery/Error
 
 ## Business setup
 - Create Business
 - Business Profile
-- Business Type/Capabilities
+- Business Type
 - Primary Location
-- Payment Accounts later in M1
-- Staff management later in M2
+- Capabilities derived from profile
+- Payment Accounts later
+- Staff management later
 
 ## Staff operational surface
 - Home
 - New Sale
 - Sales
 - Stock
-- Receive Stock
-- Expenses
+- Receive
+- Expense
 - Cash Session
-- Assigned/allowed attention
+- Allowed attention
 
 ## Owner surface
 - Home / Attention
@@ -909,32 +828,24 @@ This is information architecture, not pixel design.
 - Expenses
 - Cash
 - Staff
-- Corrections/Approvals
+- Corrections
 - Readiness
 - Tax Readiness
 - Reports
 - Settings
+- Plan & Billing later
 
-## M0-only visible shell
-M0 does not need M1 screens.
+## Commercial surfaces later
+- Current Plan
+- Feature/Plan comparison
+- Upgrade/Downgrade
+- Add-ons
+- Billing status/history
+- Restore/Refresh purchase state where relevant
 
-M0 UI should prove:
-- signed-out/signed-in;
-- active business;
-- role;
-- connection/sync state where useful;
-- create/switch business foundation;
-- safe errors/loading.
+Business type selection must not be presented as a pricing decision.
 
-For each implemented screen, define:
-- purpose;
-- permitted role;
-- primary action;
-- loading state;
-- empty state;
-- offline state;
-- error/retry state;
-- accessibility/touch behavior.
+Customer-facing UI should use plain language. Terms such as tenancy, RLS, outbox, and idempotency belong in technical/admin contexts, not normal staff/owner workflows.
 
 ---
 
@@ -943,18 +854,16 @@ For each implemented screen, define:
 - phone-first;
 - portrait-first;
 - Android and iOS;
-- low-cost Android devices are first-class;
+- affordable Android devices are first-class;
 - thumb-friendly;
-- large tap targets;
+- large touch targets;
 - minimal typing;
 - fast repeat workflows;
 - explicit sync state;
 - explicit error recovery;
-- never hide data-loss risk;
+- no hidden data-loss risk;
 - accessibility-aware;
 - mobile is not a small desktop.
-
-No web/tablet product is required for MVP.
 
 ---
 
@@ -963,7 +872,7 @@ No web/tablet product is required for MVP.
 ## Local database
 Use Expo-compatible SQLite or equally justified transactional storage.
 
-Do not use key-value storage as the sole transactional database.
+Key-value storage is not the sole transactional source of truth.
 
 ## Durable outbox
 Conceptual fields:
@@ -990,145 +899,73 @@ Conceptual fields:
 - no silent loss.
 
 ## Conflict strategy
-Use domain-specific rules.
+Use domain-specific rules:
+- duplicate finalized command → idempotency;
+- profile edit → version check;
+- correction → explicit workflow;
+- cash close → controlled state transition;
+- price update → versioned/authorized update.
 
-Examples:
-- immutable finalized sale: duplicate collapses via idempotency;
-- profile edit: optimistic version check;
-- correction: explicit workflow;
-- cash close: only one valid close transition;
-- price update: versioned/authorized update.
-
-Do not add CRDT/general distributed-lock infrastructure without evidence.
+No generalized CRDT/distributed-lock infrastructure without evidence.
 
 ---
 
 # 20. Security and threat model
 
-## 20.1 Threats
+## Account/session
+Threats: stolen device/session, leaked token, stale session.  
+Mitigations: secure storage, expiry/revocation, re-auth later where justified.
 
-### Account/session
-Threats:
-- stolen device/session;
-- leaked token;
-- stale session.
+## Tenant isolation
+Threats: cross-business access, `business_id` tampering.  
+Mitigations: RLS, membership checks, negative tests.
 
-Mitigations:
-- secure token storage appropriate to Expo;
-- session expiry/revocation;
-- re-auth for sensitive actions later where justified.
+## Staff escalation
+Threat: STAFF directly invokes owner-only action.  
+Mitigation: server/database role/permission checks.
 
-### Tenant isolation
-Threats:
-- user changes `business_id`;
-- cross-business reads/writes;
-- insecure query filtering.
+## Mobile/local data
+Threats: lost phone, DB extraction, sensitive logs.  
+Mitigations: minimum local sensitive data, secure token storage, no secret logging, device/session revocation strategy, evaluate DB encryption if justified.
 
-Mitigations:
-- RLS;
-- server membership checks;
-- tenant-isolation tests;
-- no client-only authorization.
+## Sync/replay
+Threats: duplicate/replay/partial sync/stale client.  
+Mitigations: command IDs, receipts, transactions, version checks, explicit error state.
 
-### Staff privilege escalation
-Threat:
-- STAFF invokes owner-only command directly.
+## Database/RLS
+Threats: missing/unsafe RLS, privileged bypass, secret leakage.  
+Mitigations: RLS, policy tests, least privilege, no privileged key in client, careful database functions.
 
-Mitigation:
-- server/database role checks;
-- explicit owner-only command policies;
-- negative tests.
+## Financial-record manipulation
+Threat: silent editing/deletion.  
+Mitigation: correction model + audit + owner approvals.
 
-### Mobile/local data
-Threats:
-- lost phone;
-- local DB extraction;
-- leaked logs.
+## Evidence exposure
+Threat: unauthorized document access.  
+Mitigation: private storage + business authorization + controlled retrieval.
 
-Mitigations:
-- minimize locally stored sensitive data;
-- secure token storage;
-- no secrets in logs;
-- device/session revocation strategy;
-- evaluate DB encryption if evidence/requirements justify it.
+## Supply chain
+Threat: compromised dependencies/tools/skills.  
+Mitigation: pinned versions, lockfiles, dependency review, prefer official/upstream specialist guidance, never execute unreviewed skill scripts blindly.
 
-### Sync/replay
-Threats:
-- duplicate command;
-- replay;
-- partial sync;
-- stale client.
+## AI/regulatory hallucination
+Threat: invented requirement/tax conclusion.  
+Mitigation: deterministic rules, source/version metadata, AI explanation only, UNKNOWN when unsupported.
 
-Mitigations:
-- unique command IDs;
-- server command receipts;
-- database transactions;
-- optimistic/version checks where needed;
-- explicit retry/error state.
-
-### Database/RLS
-Threats:
-- missing RLS;
-- unsafe policies;
-- privileged function bypass;
-- service key leakage.
-
-Mitigations:
-- RLS on exposed business-owned tables;
-- policy tests;
-- least privilege;
-- no service key in mobile;
-- scrutinize privileged functions.
-
-### Financial-record manipulation
-Threat:
-- silent editing/deletion.
-
-Mitigation:
-- append/correction model;
-- audit;
-- owner approvals where required.
-
-### Evidence exposure
-Threat:
-- unauthorized document access.
-
-Mitigation:
-- private-by-default storage;
-- business-scoped authorization;
-- signed/short-lived retrieval where appropriate later.
-
-### Supply chain
-Threat:
-- compromised dependency/tool/skill.
-
-Mitigation:
-- pin versions;
-- lockfiles;
-- review dependencies;
-- prefer official/upstream skills for fast-moving platforms;
-- do not execute unreviewed skill scripts blindly.
-
-### AI/regulatory hallucination
-Threat:
-- invented requirement/tax conclusion.
-
-Mitigation:
-- deterministic rule engine;
-- source/version metadata;
-- AI explanation only;
-- UNKNOWN when unsupported.
+## Commercial bypass later
+Threats: client changes plan flag, fake purchase, stale paid state.  
+Mitigations: server-authoritative subscription/entitlement state, provider verification, signed/trusted events, idempotent billing processing, sensitive feature authorization on server.
 
 ---
 
 # 21. Regulatory and tax evidence discipline
 
-Any government/business/tax rule shipped must be traceable to:
+Any regulatory/tax rule shipped must be traceable to:
 - source;
 - authority;
 - jurisdiction;
 - effective date;
-- review date/state;
+- review state/date;
 - rule version;
 - applicability facts;
 - supersession.
@@ -1140,9 +977,9 @@ Possible source states:
 - RESEARCH_REQUIRED
 - DEPRECATED
 
-No unverified research may be presented as definitive instruction.
+Unverified research is never definitive instruction.
 
-Tax readiness uses:
+Tax readiness may use:
 - owner-confirmed tax facts;
 - period context;
 - recorded sales;
@@ -1153,7 +990,7 @@ It must not:
 - invent obligations;
 - infer final legal classification solely from sales totals;
 - claim unsupported final liability;
-- file/sign/pay/submit;
+- file/sign/pay/submit autonomously;
 - claim government acceptance;
 - store government portal passwords.
 
@@ -1172,10 +1009,9 @@ AI may:
 - identify contradictions.
 
 AI may not:
-- invent requirements;
-- invent official sources;
-- mutate confirmed facts silently;
-- certify compliance/BMBE;
+- invent requirements/sources;
+- silently mutate confirmed facts;
+- certify compliance;
 - determine unsupported final tax liability;
 - authorize financial actions;
 - file/sign/pay/submit;
@@ -1193,9 +1029,9 @@ structured data + verified rules + source metadata
 
 # 23. Capability and business-pack architecture
 
-Capabilities determine applicable product surface.
+Capabilities determine which workflows are relevant.
 
-Core capability examples:
+Core examples:
 - sales;
 - products;
 - services;
@@ -1209,107 +1045,272 @@ Core capability examples:
 - staff;
 - readiness;
 - tax_readiness;
-- requirements;
-- bmbe.
+- requirements.
 
-Future:
+Future specialized examples:
 - job_orders;
 - recipes;
+- ingredient_consumption;
 - water_containers;
-- rice_repacking.
+- dispenser_rentals;
+- rice_repacking;
+- advanced_costing.
 
-Business packs:
-- Retail
-- Food & Beverage / Coffee
-- Service Installation
-- Water Refilling
-- Rice Retail
-
-A pack may provide:
+Business profiles/packs may provide:
 - default capabilities;
 - terminology;
 - onboarding questions;
 - cards/actions;
 - validation/extensions;
-- pack-specific workflows.
+- specialized workflows.
 
-It may not bypass core security/audit/sync/money/inventory invariants.
-
----
-
-# 24. Validation businesses
-
-## DuoBrew
-Core validation:
-- products/services;
-- sales;
-- payments;
-- expenses;
-- inventory;
-- suppliers;
-- staff;
-- readiness;
-- tax readiness.
-
-Later Coffee Pack:
-- recipes;
-- ingredient depletion;
-- modifiers;
-- wastage;
-- recipe costing.
-
-## SHADE Car Tint Installation Services
-Core validation:
-- services;
-- material inventory;
-- customers;
-- sales;
-- payments;
-- expenses;
-- staff;
-- readiness;
-- tax readiness.
-
-Later pack:
-- leads;
-- quotations;
-- bookings;
-- vehicles;
-- job orders;
-- material consumption;
-- installer payouts;
-- job profitability.
-
-## RRWRS
-Core validation:
-- products/services;
-- sales;
-- inventory;
-- receiving;
-- expenses;
-- payments;
-- cash;
-- suppliers;
-- staff;
-- readiness;
-- tax readiness.
-
-Later Water:
-- returnable containers;
-- deposits/loans;
-- rentals;
-- delivery;
-- maintenance/compliance.
-
-Later Rice:
-- sack/kg workflows;
-- repacking;
-- weighted-average costing;
-- shrinkage.
+A pack may not bypass core security/audit/sync/money/inventory invariants.
 
 ---
 
-# 25. Repository architecture
+# 24. Freemium / commercial architecture
+
+Kwernta is intended to support a **freemium SaaS model**.
+
+This section defines architecture, not final pricing.
+
+## 24.1 Five separate concepts
+
+### Capability
+**Question:** Is this feature relevant to this business?
+
+Derived from business profile/type and explicit configuration.
+
+### Entitlement
+**Question:** Is this business commercially allowed to use this feature right now?
+
+Derived from plan, add-ons, trials, promotional access, or other trusted commercial state.
+
+### Permission
+**Question:** Is this specific authenticated member allowed to perform the action?
+
+Derived from membership/role/permission.
+
+### Subscription
+**Question:** What commercial agreement currently grants entitlements to this business?
+
+Primarily business-scoped.
+
+### Billing
+**Question:** What trusted external payment mechanism established/renewed that subscription?
+
+Provider-specific; must not leak into product-domain logic.
+
+## 24.2 Effective access
+
+A specialized action may require all relevant checks:
+
+```text
+Capability applicable?
+        +
+Business entitled?
+        +
+Member permitted?
+        +
+Server authorization valid?
+        =
+Action allowed
+```
+
+Do not scatter `if (plan === "pro")` throughout UI/domain code.
+
+Use centralized entitlement resolution when commercialization is implemented.
+
+## 24.3 Business-scoped subscription
+
+Primary model:
+
+```text
+Business
+ ├─ Plan / Subscription
+ ├─ Add-ons
+ ├─ Effective Entitlements
+ └─ Members
+      ├─ OWNER permissions
+      └─ STAFF permissions
+```
+
+Staff members do not individually purchase the business plan.
+
+One account owning multiple businesses may have different subscription state per business.
+
+## 24.4 Freemium principles
+
+Free must be genuinely usable.
+
+Never paywall:
+- tenant isolation;
+- authentication safety;
+- core authorization;
+- data integrity;
+- idempotency;
+- safe local persistence;
+- safe synchronization;
+- essential recovery;
+- basic traceability required for trustworthy records.
+
+Paid value should come from:
+- increased scale;
+- advanced owner controls;
+- advanced reporting/exports;
+- deeper readiness workflows;
+- collaboration;
+- convenience/automation;
+- specialized business workflows;
+- higher limits where reasonable.
+
+## 24.5 Illustrative packaging direction
+
+Exact packaging is not final.
+
+Possible commercial structure:
+
+### Free
+Core Kwernta experience with practical limits.
+
+### Pro
+More scale, advanced controls, advanced reports/exports, deeper readiness tools, and other validated premium value.
+
+### Specialized add-ons / packs
+Advanced workflows relevant to particular business types.
+
+Selecting a business type is **not** the same as buying a pack.
+
+Basic profile relevance may be free while advanced specialized workflows may later require entitlements.
+
+## 24.6 Subscription lifecycle
+
+Do not reduce subscription state to `is_paid: boolean`.
+
+Conceptual states may include:
+- FREE
+- TRIAL
+- ACTIVE
+- PAST_DUE
+- GRACE_PERIOD
+- CANCELED
+- EXPIRED
+
+Possible metadata:
+- provider;
+- provider customer/subscription reference;
+- current_period_start;
+- current_period_end;
+- cancel_at_period_end;
+- last_verified_at.
+
+Exact state model should be adapted to actual billing providers when implemented.
+
+## 24.7 Upgrade
+
+Conceptual flow:
+
+```text
+Owner initiates purchase
+        ↓
+Approved billing channel
+        ↓
+Trusted provider confirmation
+        ↓
+Server verifies/processes event
+        ↓
+Business subscription state updated
+        ↓
+Entitlement resolver recomputes
+        ↓
+App refreshes effective entitlements
+```
+
+Client UI never grants paid access solely because a button was tapped.
+
+## 24.8 Cancellation and downgrade
+
+Cancel-at-period-end normally preserves paid access until the paid period ends, subject to provider rules.
+
+When entitlement decreases:
+- do not delete existing business records;
+- do not silently delete staff;
+- do not destroy specialized history;
+- prevent new actions that exceed current entitlement;
+- provide clear resolution paths;
+- keep historical data readable where appropriate and legally/product-wise permissible.
+
+Example:
+If a plan allows fewer active staff after downgrade, preserve records and require the owner to resolve active-seat limits rather than deleting users automatically.
+
+## 24.9 Offline entitlement snapshot
+
+Because Kwernta works under intermittent connectivity, the app may later cache a signed/trusted last-known entitlement snapshot containing:
+- business;
+- effective entitlements;
+- validated_at;
+- refresh/validity metadata.
+
+Principle:
+
+**local usability, server authority.**
+
+Cached entitlement state may support temporary offline UX, but sensitive server operations still enforce current server-side entitlements.
+
+## 24.10 Billing provider abstraction
+
+Kwernta supports Android and iOS. Store/payment rules change and may differ by storefront/region.
+
+Therefore:
+- do not hard-code one billing vendor into domain logic;
+- use provider adapters later;
+- verify current store rules before commercialization;
+- server processes trusted billing events idempotently;
+- product logic consumes effective entitlements rather than provider-specific objects.
+
+## 24.11 M0 boundary
+
+M0 implements:
+- capability architecture only;
+- clean seams so a later entitlement resolver can be added.
+
+M0 does NOT implement:
+- plans;
+- pricing;
+- paid entitlements;
+- trials;
+- checkout;
+- app-store billing;
+- billing webhooks;
+- subscription tables merely for speculation;
+- upgrade/downgrade UX.
+
+---
+
+# 25. Business archetype validation
+
+Core architecture should be validated against multiple generic business archetypes:
+
+## Retail
+Products, sales, payment accounts, stock, receiving, expenses, cash, staff.
+
+## Food & Beverage
+Core operations now; specialized recipes, modifiers, ingredient consumption, wastage, recipe costing later.
+
+## Service Business
+Core services/customers/payments/expenses now; quotations, bookings, job orders, material consumption, payouts later.
+
+## Water Refilling
+Core products/services/inventory/cash now; returnable containers, deposits/loans, rentals, delivery/maintenance later.
+
+## Rice Retail
+Core products/inventory/receiving/sales now; kg/sack workflows, repacking, advanced costing, shrinkage later.
+
+The core should remain business-neutral. Specialized assumptions belong in packs.
+
+---
+
+# 26. Repository architecture
 
 Target direction:
 
@@ -1343,21 +1344,15 @@ kwernta/
 │   └── ui/
 │
 ├── business-packs/
-│   ├── retail/
-│   ├── coffee/
-│   ├── service-installation/
-│   ├── water-refilling/
-│   └── rice-retail/
-│
 ├── supabase/
 └── tests/
 ```
 
-Do not create empty packages solely to match the diagram.
+Do not create empty packages solely to match this conceptual tree.
 
 ---
 
-# 26. Technical baseline
+# 27. Technical baseline
 
 Unless implementation evidence justifies another compatible choice:
 - React Native;
@@ -1368,15 +1363,14 @@ Unless implementation evidence justifies another compatible choice:
 - PostgreSQL;
 - Supabase Auth;
 - PostgreSQL RLS;
-- Supabase Storage later where needed;
+- Supabase Storage when needed;
 - mobile SQLite or equivalent;
-- lint/typecheck/tests/CI.
+- automated lint/typecheck/tests/CI.
 
-Do not blindly copy dependency versions from e-negosyoph.
+Select currently compatible versions deliberately.
 
 Not MVP:
-- Open SaaS/Wasp as app base;
-- generic web SaaS boilerplate;
+- generic web SaaS foundation;
 - microservices;
 - Kubernetes;
 - service mesh;
@@ -1385,147 +1379,92 @@ Not MVP:
 
 ---
 
-# 27. MVP backlog
+# 28. MVP backlog
 
-This is the capability backlog, not a giant ticket dump.
+## M0.1 Workspace/tooling
+Clean install, pinned compatible dependencies, lint/typecheck/tests, CI, safe environment handling.
 
-## M0 backlog
+## M0.2 Mobile shell
+Expo app launches; signed-out/signed-in shell; active business/role context.
 
-### M0.1 Workspace/tooling
-Acceptance:
-- clean install;
-- pinned compatible deps;
-- lint/typecheck/tests;
-- CI;
-- safe env handling.
+## M0.3 Authentication
+Session restore, sign-in/out foundation, no privileged secret in bundle.
 
-### M0.2 Mobile shell
-Acceptance:
-- Expo app launches;
-- signed-out/signed-in shells;
-- active business/role context visible where appropriate.
+## M0.4 Business tenancy
+Business, OWNER membership, location foundation, active-business context, cross-tenant denial tests.
 
-### M0.3 Authentication
-Acceptance:
-- session restore;
-- sign in/out foundation;
-- no privileged secret in bundle.
+## M0.5 Roles/authorization
+OWNER/STAFF represented; owner-only negative test.
 
-### M0.4 Business tenancy
-Acceptance:
-- business;
-- OWNER membership;
-- location foundation;
-- active-business context;
-- cross-tenant denial tests.
+## M0.6 Capability/business-pack contract
+Stable IDs, profile resolves applicable capabilities, business-neutral core.
 
-### M0.5 Roles/authz
-Acceptance:
-- OWNER/STAFF represented;
-- server-side owner-only denial test.
+## M0.7 Local DB
+Versioned schema, transactional local persistence, restart durability.
 
-### M0.6 Capabilities/business-pack contract
-Acceptance:
-- stable IDs;
-- profile resolves capabilities;
-- no industry-specific core assumptions.
+## M0.8 Durable outbox
+Persistent command, retry/error state, no silent purge.
 
-### M0.7 Local DB
-Acceptance:
-- versioned schema;
-- transactional local persistence;
-- restart durability.
+## M0.9 Sync proof
+One harmless local command reaches server, membership is checked, acknowledgment updates local state.
 
-### M0.8 Outbox
-Acceptance:
-- durable command;
-- retry/error state;
-- no silent purge.
+## M0.10 Idempotency
+Repeated command does not duplicate mutation.
 
-### M0.9 Sync proof
-Acceptance:
-- one harmless local command reaches server;
-- server validates membership;
-- ack updates local state.
+## M0.11 Audit
+Relevant M0 server mutation creates structured audit event.
 
-### M0.10 Idempotency
-Acceptance:
-- same command repeated does not duplicate mutation.
+## M0.12 RLS/security
+Cross-tenant access denied; STAFF owner-only action denied.
 
-### M0.11 Audit
-Acceptance:
-- relevant M0 server mutation creates structured audit event.
-
-### M0.12 RLS/security
-Acceptance:
-- User A cannot read/write User B business;
-- STAFF cannot invoke owner-only foundation action.
-
-### M0.13 Validation
-Acceptance:
-- root validation command;
-- Expo validation;
-- DB/security tests;
-- git diff check;
-- CI green where environment permits.
+## M0.13 Validation
+Root validation, Expo validation, DB/security tests, diff check, CI where environment permits.
 
 ---
 
-# 28. Milestone-by-milestone plan
+# 29. Milestone plan
 
 ## M0 — Product Foundation
-
-**Objective:** establish trustworthy mobile/SaaS/offline/security foundations.
-
-**In scope:** tooling, mobile shell, auth, business/membership, OWNER/STAFF, location foundation, active business, capabilities, pack contract, local DB, outbox, sync proof, idempotency, audit, RLS, tests, CI.
-
-**Not in scope:** real catalog/sales/inventory/expenses, PSIC/PSGC, BMBE, requirements, tax readiness, deep business packs.
-
-**Exit:** M0 acceptance scenario + security/offline tests pass.
+**Objective:** trustworthy mobile/SaaS/offline/security foundations.  
+**In:** tooling, mobile shell, auth, business/membership, OWNER/STAFF, location foundation, active business, capabilities, pack contract, local DB, outbox, sync proof, idempotency, audit, RLS, tests, CI.  
+**Out:** real sales/inventory/expenses, readiness rules, tax features, billing/subscriptions.  
+**Exit:** security/offline acceptance scenario passes.
 
 ## M1 — Daily Operations
-
-**Objective:** complete real daily business loop.
-
-**In scope:** catalog, payment accounts, sales/payments, inventory ledger, receiving, expenses, customers, suppliers, cash sessions, operational dashboard, offline/sync, transaction history, stock attention.
-
-**Exit:** staff can operate a normal day with intermittent connectivity and owner sees correct consolidated state.
+**Objective:** real daily business loop.  
+**In:** catalog, payment accounts, sales/payments, inventory ledger, receiving, expenses, customers, suppliers, cash sessions, operational dashboard, offline/sync, history, stock attention.  
+**Exit:** staff can operate a normal day under intermittent connectivity and owner sees correct consolidated state.
 
 ## M2 — Owner/Staff Control
-
-**Objective:** make delegation safe.
-
-**In scope:** invitations, permission toggles, owner-only boundaries, corrections, approvals, reversals, audit history, cash variance attention, concurrency tests.
-
-**Exit:** staff cannot bypass owner controls and history remains auditable.
+**Objective:** safe delegation.  
+**In:** invitation, permission toggles, owner-only boundaries, corrections, approvals, reversals, audit history, cash variance attention, concurrency tests.  
+**Exit:** staff cannot bypass controls; history remains auditable.
 
 ## M3 — Business Readiness
-
-**Objective:** turn business facts into source-backed readiness actions.
-
-**In scope:** business activity/category, PSIC, PSGC, lifecycle, registration profile, versioned requirements, limited verified coverage, evidence/status, BMBE readiness, readiness actions, explicit gaps.
-
-**Exit:** owner can understand what applies, why, what is missing, and what source supports it.
+**Objective:** source-backed business next actions.  
+**In:** activity/category, classification/location, lifecycle, registration profile, versioned requirements, limited verified coverage, evidence/status, readiness actions, explicit gaps.  
+**Exit:** owner understands what applies, why, what is missing, and source basis.
 
 ## M4 — Tax Readiness
-
-**Objective:** connect operational records to tax-record preparation readiness.
-
-**In scope:** owner-confirmed tax profile, period context, recorded sales, record/evidence completeness, supported verified obligation discovery, readiness states/actions, verified reminders, export.
-
-**Exit:** Kwernta can say whether records are ready to prepare/review without pretending to file or determine unsupported final liability.
+**Objective:** connect operational records to tax-record preparation readiness.  
+**In:** owner-confirmed tax profile, period context, recorded sales, completeness, supported verified obligation discovery, readiness states/actions, reminders, export.  
+**Exit:** Kwernta can describe record readiness without pretending to file or determine unsupported final liability.
 
 ## M5A — Thin Business-Pack Validation
-
-**Objective:** prove one shared core can adapt to different business types.
-
-**In scope:** Retail, Food & Beverage, Service profiles; capability-driven navigation/dashboard; optional thin Water/Rice profiles.
-
+**Objective:** prove one shared core adapts to multiple business types.  
+**In:** Retail, Food & Beverage, Service profiles; capability-driven navigation/dashboard; optional Water/Rice profiles.  
 **Exit:** no duplicate app and no irrelevant module exposure.
+
+## M5B — Commercialization / Entitlements
+**Objective:** convert validated product value into a trustworthy freemium SaaS model.  
+**In:** plan catalog, centralized entitlement resolver, business subscriptions, trials if approved, add-ons, upgrade/downgrade, grace periods, provider adapters, trusted billing events, offline entitlement snapshot, plan/limit UX.  
+**Exit:** paid access is server-authoritative, provider-verifiable, data-preserving, and independent from permissions/capability relevance.
+
+Exact packaging/pricing must be validated before M5B implementation.
 
 ---
 
-# 29. Testing strategy
+# 30. Testing strategy
 
 ## Domain
 - calculations;
@@ -1533,40 +1472,40 @@ Acceptance:
 - action rules;
 - capability resolution;
 - authorization helpers;
-- inventory/cash/readiness logic as milestones arrive.
+- later entitlement resolution;
+- inventory/cash/readiness logic.
 
 ## Database/security
 - RLS;
 - tenant isolation;
 - owner/staff restrictions;
 - idempotency;
-- transaction atomicity;
+- atomicity;
 - audit;
 - optimistic concurrency.
 
 ## Local/offline
 - schema migration;
 - durable outbox;
-- local transaction + outbox atomicity;
+- transaction + outbox atomicity;
 - restart persistence;
 - retry;
 - duplicate replay;
 - stale client.
 
 ## Integration/UI
-Critical paths per milestone.
-
 M0 critical path:
-auth → create business → OWNER membership → active business → local command → outbox → server → idempotent receipt → ack.
+
+auth → create business → OWNER membership → active business → local command → outbox → server authorization → idempotent receipt → ack.
 
 No milestone is done because screens render.
 
 ---
 
-# 30. Definition of done
+# 31. Definition of done
 
 A feature is done only when:
-- behavior is implemented;
+- domain behavior exists;
 - authorization is correct;
 - persistence works;
 - offline/sync behavior is defined where relevant;
@@ -1575,42 +1514,10 @@ A feature is done only when:
 - tests cover meaningful paths;
 - UI reflects real state;
 - no placeholder is presented as complete;
-- regulatory/tax claims have verified source metadata where applicable.
+- regulatory/tax claims have verified source metadata where applicable;
+- commercial feature gating, once introduced, is server-authoritative and separated from permissions/capabilities.
 
 A milestone is done only when its end-to-end acceptance scenario works.
-
----
-
-# 31. Legacy repository policy
-
-Reference only:
-https://github.com/jusbreakindacycle/e-negosyoph
-
-Potential M0 references:
-- tenancy;
-- RLS;
-- idempotency;
-- audit;
-- tests.
-
-Potential M3 references:
-- PSIC;
-- PSGC;
-- requirement graph;
-- BMBE work.
-
-Do not:
-- bulk import;
-- copy migrations/package.json/screens;
-- preserve old product assumptions;
-- activate old regulatory/tax rules without re-verification.
-
-For any meaningful port, record:
-- source path;
-- why used;
-- verification;
-- adaptation;
-- tests.
 
 ---
 
@@ -1625,16 +1532,16 @@ For any meaningful port, record:
 7. Inventory is a movement ledger.
 8. Payment methods are payment accounts, not architecture forks.
 9. Business packs extend; they do not fork.
-10. Applicability and paid entitlement are separate.
-11. Recorded sales are facts, not automatic legal/tax conclusions.
-12. Tax readiness is not filing.
-13. Unknown is better than fabricated certainty.
-14. Verified rules drive readiness; AI explains.
-15. Mobile UX stays simple while data/security stays disciplined.
-16. Build unique Kwernta domain; reuse mature commodity infrastructure later.
-17. Generalize only after multiple real businesses prove the abstraction.
-18. Least privilege and privacy by default.
-19. Test foundational invariants, not only happy-path screens.
+10. Capability, entitlement, permission, subscription, and billing are distinct.
+11. Business type is not pricing.
+12. Security and data integrity are never premium features.
+13. Downgrade never silently destroys business history.
+14. Recorded sales are facts, not automatic legal/tax conclusions.
+15. Tax readiness is not filing.
+16. Unknown is better than fabricated certainty.
+17. Verified rules drive readiness; AI explains.
+18. Mobile UX stays simple while data/security stays disciplined.
+19. Generalize only after multiple business archetypes prove an abstraction.
 20. Build milestone by milestone with evidence.
 
 ---
