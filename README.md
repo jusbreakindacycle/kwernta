@@ -14,10 +14,12 @@ Kwernta is not a generic “all-in-one ERP.” Its value is the connection betwe
 
 ## Canonical documents
 
-**Product + architecture authority:**  
+**Product + architecture authority:**
+
 [`MASTER_PRODUCT_BRIEF.md`](./MASTER_PRODUCT_BRIEF.md)
 
-**Coding-agent execution rules:**  
+**Coding-agent execution rules:**
+
 [`AGENTS.md`](./AGENTS.md)
 
 If a skill, implementation assumption, template, or framework convention conflicts with the Master Product Brief, the Master Product Brief wins unless an explicit later product decision changes it.
