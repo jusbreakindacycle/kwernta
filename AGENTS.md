@@ -130,29 +130,36 @@ Rules:
 - AAS structural validation does not prove semantic correctness;
 - do not manually fabricate `aas-stack.json` and call it validated.
 
-Initial M0 candidates to evaluate, not automatically select:
+Initial M0 search concepts to evaluate:
+
+These are capability/search concepts, **not guaranteed catalog IDs**. The agent must discover and verify the exact current IDs through AAS Core rather than assuming these names resolve.
 
 Primary engineering:
-- `implement`
-- `tdd`
-- `code-review`
-- `diagnosing-bugs`
-- `domain-modeling`
-- `codebase-design`
+- implementation workflow;
+- test-driven development;
+- code review;
+- systematic debugging;
+- domain modeling;
+- codebase architecture/design.
 
 Mobile:
-- `react-native-architecture`
-- `react-native-skills`
+- React Native architecture;
+- React Native/Expo implementation;
+- offline-first mobile design;
+- mobile accessibility/performance.
 
-Backend:
-- `supabase`
-- `supabase-postgres-best-practices`
+Backend/data:
+- Supabase;
+- PostgreSQL/RLS;
+- SQLite/local transactional storage;
+- idempotency/synchronization;
+- tenant security.
 
 Delivery:
-- `expo-cicd-workflows` only when Expo/EAS CI/CD work is actually in scope
+- Expo/EAS CI/CD when actually in scope.
 
 Optional/task-specific:
-- `mobile-design`
+- mobile product/design guidance.
 
 For Supabase tasks, prefer official/upstream Supabase guidance/current docs over generic database administration guidance.
 
